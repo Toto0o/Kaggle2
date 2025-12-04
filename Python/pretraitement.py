@@ -1,55 +1,91 @@
 import pickle
 import numpy as np
+from models import Model
+import csv
 
-class dataPipline :
+class DataSet :
 
-    def __init__(self, train_data_path:str):
-        with open(train_data_path, "rb") as f:
+    def __init__(self, images, labels, seed=42, k=5):
+        self.images: np.ndarray = images
+        self.labels: np.ndarray = labels
+        self.n = self.images.shape[0]
+        self.seed = 42
+        self.k = k
+    
+    @classmethod
+    def from_pickle(cls, path) :
+        with open(path, "rb") as f:
             data = pickle.load(f)
         
-        self.images = data['images']
-        self.labels = data['labels']
-        N, H, W, C = self.images.shape
-        self.N = N
-        self.H = H
-        self.W = W
-        self.C = C
+        images = data['images']
+        labels = data['labels']
+
+        return cls(images, labels)
+    
+    def set_test_kaggle_data(self, path, shuffle=True, normalize=True, flatten=True) :
+        with open(path, "rb") as f:
+            test_data = pickle.load(f)
+        self.test_images: np.ndarray = test_data['images']
+        if shuffle :
+            np.random.seed(self.seed)
+            shuffled_idx = np.random.permutation(len(self.test_images))
+            self.test_images = self.test_images[shuffled_idx]
+        if normalize:
+            self.test_images = self.test_images.astype("float32") / 255.0
+        if flatten :
+            self.test_images = self.test_images.reshape(len(self.test_images),-1)
+        
     
     def normalize(self) :
-        images_norm = self.images.astype("float32") / 255.0
-        return images_norm.reshape(self.N, -1)
+        self.images = self.images.astype("float32") / 255.0
     
-    def train_val_split(self, seed, size) :
-        np.random.seed(seed)
+    def flatten(self) :
+        
+        self.images = self.images.reshape(self.n, -1)
 
-        indices = np.random.permutation(self.N)
+    def shuffle(self) :
+        np.random.seed(self.seed)
+        shuffled_idx = np.random.permutation(self.n)
+        self.images = self.images[shuffled_idx]
+        self.labels = self.labels[shuffled_idx]
+    
+    def kfold_split(self) :
+        images_fold = np.array_split(self.images, self.k)
+        labels_fold = np.array_split(self.labels, self.k)
+        
+        return images_fold, labels_fold
+    
+    def evaluate(self, model_class, **model_kwargs) :
+        model: Model = model_class(**model_kwargs)
+        fold = self.kfold_split()
+        accuracy = 0
+        for i in range(self.k) :
+            images_train = np.concatenate(fold[0][:i] + fold[0][i+1:], axis=0)
+            images_val = fold[0][i]
+            labels_train = np.concatenate(fold[1][:i] +fold[1][i+1:], axis=0)
+            labels_val = fold[1][i]
 
-        images_shuffles = self.images[indices]
-        labels_shuffle = self.labels[indices]
+            model.fit(images_train, labels_train)
+            accuracy += model.accuracy(images_val, labels_val)
 
-        images_train = images_shuffles[:size]
-        images_val = images_shuffles[size:]
+        return accuracy/self.k
+    
+    def make_csv(self, model_class, **model_kwargs) :
+        model: Model = model_class(**model_kwargs)
+        model.fit(self.images, self.labels)
+        prediction = model.predict(self.test_images)
 
-        labels_train = labels_shuffle[:size]
-        labels_val = labels_shuffle[size:]
+        with open("KNN_1", "x") as f:
+            writer = csv.writer(f)
+            writer.writerow(["ID", "Label"])
 
-        return images_train, images_val, labels_train, labels_val
+            for i,pred in enumerate(prediction) :
+                writer.writerow([i+1,pred])
+            
+            f.close()
 
 
-class KNN :
 
-    def __init__(self, images, labels) :
-        self.images = images
-        self.labels = labels
-
-    @staticmethod
-    def distance(x1, x2, p) :
-        return (np.sum((np.abs(x1-x2))**p, axis=1))**(1/p)
-
-    def predict(self, k, data, p) :
-        distances = self.distance(data, self.images, p)
-        nn_index = np.argsort(distances)[:k]
-        return self.labels[nn_index]        
 
 
 
