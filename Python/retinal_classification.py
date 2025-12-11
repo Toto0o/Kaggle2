@@ -1,5 +1,6 @@
-from pretraitement import DataSet_KNN, DataSet_CNN
-from models import KNN, CNN
+from Python.KNN.dataset import DataSet as DataSet_KNN
+from Python.CNN.dataset import DataSet as DataSet_CNN
+from Python.CNN.CNN import KNN, CNN
 from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from torchvision import transforms
 import pickle
@@ -8,30 +9,20 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import time
-import os
+import sys
 
 
 if __name__ == "__main__" :
 
-    print(os.getcwd())
     
     path = "Python/train_data.pkl"
     test_path = "Python/test_data.pkl"
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    """
 
-    train_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(degrees=10),
-        transforms.ColorJitter(brightness=0.15, contrast=0.15),
-        transforms.ToTensor(),
-    ])
+    Décomenter les lignes ci-dessous pous utiliser le code pour le modèle knn
 
-    val_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(),
-    ])
+    """
 
     # data_set: DataSet_KNN = DataSet_KNN.from_pickle(path)
 
@@ -58,6 +49,28 @@ if __name__ == "__main__" :
     # print("time training : ", delta_time)
 
     # data_set.make_csv(KNN, k=152, p=22)
+
+    """
+    
+    Décommenter les lignes ci-desous pour effectuer  le code pour cnn
+    
+    """
+
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    train_transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomRotation(degrees=10),
+        transforms.ColorJitter(brightness=0.15, contrast=0.15),
+        transforms.ToTensor(),
+    ])
+
+    val_transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),
+    ])
 
     with open(path, "rb") as f:
         train_data = pickle.load(f)
