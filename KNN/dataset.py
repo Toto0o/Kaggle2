@@ -37,6 +37,11 @@ class DataSet :
 
         return cls(images, labels)
     
+    def __getitem__(self) :
+        images = self.images.copy()
+        labels = self.labels.copy()
+        return images, labels
+    
     def set_test_kaggle_data(self, path, shuffle=True, normalize=True, flatten=True) :
         """
         Pour initialiser les données de test

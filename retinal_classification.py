@@ -1,17 +1,11 @@
-from KNN.dataset import DataSet as DataSet_KNN
-from CNN.dataset import DataSet as DataSet_CNN
-from KNN.KNN import KNN
-from CNN.CNN import CNN
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
-from torchvision import transforms
 import pickle
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
 import time
 import sys
-
+import csv
+import seaborn as sns
+import sklearn.metrics as skm
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__" :
 
@@ -19,14 +13,31 @@ if __name__ == "__main__" :
         print("Exemple d'utilisation : ")
         print("\t - Pour générer le fichier csv du premier jalon, executez : retinal_classification.py knn \n")
         print("\t - Pour générer le fichier csv du deuxième jalon, executez : retinal_classification.py cnn \n")
-    
+        print("\t - Executez : retinal_classification.py <modele> <path_to_test_data.pkl> pour des données de test autres")
+
+    # mode = sys.argv[1].lower()
+    mode = None
+
     path = "train_data.pkl"
     test_path = "test_data.pkl"
-
-    mode = sys.argv[1].lower()
+    
+    if (len(sys.argv) == 2) :
+        mode = sys.argv[1].lower()
+    
+    elif (len(sys.argv) == 3) :
+        mode = sys.argv[1].lower()
+        test_path = sys.argv[2]
+    
+    else :
+        example_usage()
 
     if (mode == 'knn') :
+
+        #imports
+        from KNN.dataset import DataSet as DataSet_KNN
+        from KNN.KNN import KNN
         data_set: DataSet_KNN = DataSet_KNN.from_pickle(path)
+
         data_set.shuffle()
         data_set.normalize()
         data_set.flatten()
@@ -34,6 +45,15 @@ if __name__ == "__main__" :
         data_set.make_csv(KNN, k=152, p=22)
     
     elif (mode == 'cnn') :
+
+        #imports
+        from CNN.dataset import DataSet as DataSet_CNN
+        from CNN.CNN import CNN
+        from torch.utils.data import DataLoader, WeightedRandomSampler
+        from torchvision import transforms
+        import torch
+        import torch.nn as nn
+        import torch.optim as optim
         
         with open(path, "rb") as f:
             train_data = pickle.load(f)
@@ -156,15 +176,13 @@ if __name__ == "__main__" :
 
         training_time = time.time() - start_time
 
+
         print(f"\n" + "="*60)
         print(f"✅ ENTRAÎNEMENT TERMINÉ")
         print(f"="*60)
         print(f"   Temps total     : {training_time/60:.1f} minutes")
         print(f"   Meilleure val   : {max(history['val_acc']):.4f}")
         print(f"   Epochs effectués: {len(history['train_loss'])}")
-    
-    else :
-        example_usage()
 
         
 

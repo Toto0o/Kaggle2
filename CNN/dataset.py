@@ -1,6 +1,7 @@
 import numpy as np
-from CNN.CNN import CNN
 import csv
+from torch.utils.data import Dataset
+import torch
 
 # import torch
 # from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
