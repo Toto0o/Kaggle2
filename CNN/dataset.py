@@ -1,9 +1,9 @@
 import numpy as np
-from Python.CNN.CNN import Model
+from CNN.CNN import CNN
 import csv
 
-import torch
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
+# import torch
+# from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 
 
 class DataSet(Dataset):
